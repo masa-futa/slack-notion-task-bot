@@ -1,0 +1,13 @@
+{
+  "name": "slack-notion-task-bot",
+  "version": "1.0.0",
+  "description": "Slack + Notion Task Management Bot",
+  "main": "api/task.js",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "@notionhq/client": "^2.2.15",
+    "crypto": "^1.0.1"
+  }
+}
