@@ -245,6 +245,9 @@ module.exports = async (req, res) => {
       return res.status(200).send("OK");
     }
 
+    console.log(`[slack-reaction] bot_id: ${message.bot_id}`);
+    console.log(`[slack-reaction] attachments: ${JSON.stringify(message.attachments?.map(a => a.text?.slice(0,100)))}`);
+    console.log(`[slack-reaction] text: ${message.text?.slice(0,200)}`);
     const { title, url, summary } = parseMessage(message);
     console.log(`[slack-reaction] parsed: title="${title}" url="${url}"`);
 
