@@ -119,17 +119,22 @@ function parseMessage(message) {
     const lines = src.split("\n").map((l) => l.trim()).filter(Boolean);
 
     // URL 行を探す
-    const urlLine = lines.find((l) => /^https?:\/\//.test(l));
-    url = urlLine || "";
+    // Slack は URL を <https://...> または <https://...|label> 形式で送ってくる
+    const urlLineRaw = lines.find((l) => /^<https?:\/\//.test(l) || /^https?:\/\//.test(l));
+    // 山括弧と "|ラベル" を除去して純粋な URL を取り出す
+    if (urlLineRaw) {
+      const urlMatch = urlLineRaw.match(/<(https?:\/\/[^|>\s]+)[|>]/) || urlLineRaw.match(/(https?:\/\/\S+)/);
+      url = urlMatch?.[1] || "";
+    }
 
-    // URL より前の行をタイトルとして使う
-    const urlIdx = lines.indexOf(urlLine);
+    // URL 行より前の行をタイトルとして使う
+    const urlIdx = lines.indexOf(urlLineRaw);
     if (urlIdx > 0) {
       title = lines
         .slice(0, urlIdx)
         .join(" ")
-        .replace(/:[a-z0-9_+-]+:/g, "")
-        .replace(/[🎉✨⚡️🔧🚀🎯💡📝💎🔷🌐🤖🍎]/gu, "")
+        .replace(/:[a-z0-9_+-]+:/g, "")  // :wrench: などの絵文字コードを除去
+        .replace(/[🎉✨⚡️🔧🚀🎯💡📝💎🔷🌐🤖🍎⭐]/gu, "")
         .trim();
     } else if (urlIdx === 0) {
       title = url;
