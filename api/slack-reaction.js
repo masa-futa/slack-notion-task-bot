@@ -225,10 +225,9 @@ module.exports = async (req, res) => {
 
   const { channel, ts } = event.item;
 
-  // Slack は 3 秒以内のレスポンスを要求するため、
-  // 先に 200 を返してから非同期処理を続ける
-  res.status(200).send("OK");
-
+  // Slack の 3 秒タイムアウト対策:
+  // Vercel Serverless は res.send() 後に処理が打ち切られるため、
+  // 全処理を完了してから最後に res.send() を呼ぶ
   try {
     const [message, channelName] = await Promise.all([
       fetchMessage(channel, ts),
@@ -237,27 +236,31 @@ module.exports = async (req, res) => {
 
     if (!message) {
       console.warn("[slack-reaction] Message not found:", channel, ts);
-      return;
+      return res.status(200).send("OK");
     }
 
     // Feed Bot の投稿（bot メッセージ or attachment あり）のみ保存
     if (!message.bot_id && !message.attachments?.length) {
       console.log("[slack-reaction] Not a bot message, skipping.");
-      return;
+      return res.status(200).send("OK");
     }
 
     const { title, url, summary } = parseMessage(message);
+    console.log(`[slack-reaction] parsed: title="${title}" url="${url}"`);
 
     if (!url) {
       console.warn("[slack-reaction] No URL found, skipping.");
-      return;
+      return res.status(200).send("OK");
     }
 
     const savedAt = new Date().toISOString();
     await addToNotion({ title, url, summary, channelName, savedAt });
 
     console.log(`[slack-reaction] ✅ Saved: ${title}`);
+    return res.status(200).send("OK");
+
   } catch (err) {
-    console.error("[slack-reaction] Error:", err);
+    console.error("[slack-reaction] Error:", err.message, err.code);
+    return res.status(200).send("OK");
   }
 };
