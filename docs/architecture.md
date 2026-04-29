@@ -4,76 +4,60 @@
 
 ```mermaid
 graph TB
-    subgraph User["👤 ユーザー"]
-        U[Slack でコマンド実行<br>/task /tasks /done]
-    end
-
-    subgraph Slack["💬 Slack Workspace"]
-        SA[Slack App: Task Bot]
-        SC1[Slash Command: /task]
-        SC2[Slash Command: /tasks]
-        SC3[Slash Command: /done]
-        
-        SA --> SC1
-        SA --> SC2
-        SA --> SC3
-    end
-
-    subgraph Vercel["☁️ Vercel Serverless"]
-        subgraph API["API Endpoints"]
-            API1[/api/task.js]
-            API2[/api/tasks.js]
-            API3[/api/done.js]
-        end
-        
-        subgraph Lib["📚 Library"]
-            L1[lib/slack.js<br>署名検証・パース]
-            L2[lib/notion.js<br>Notion API ラッパー]
-        end
-        
-        subgraph Env["🔐 Environment Variables"]
-            E1[SLACK_SIGNING_SECRET]
-            E2[NOTION_API_KEY]
-            E3[NOTION_DATABASE_ID]
-        end
-        
-        API1 --> L1
-        API2 --> L1
-        API3 --> L1
-        
-        API1 --> L2
-        API2 --> L2
-        API3 --> L2
-        
-        L1 -.使用.-> E1
-        L2 -.使用.-> E2
-        L2 -.使用.-> E3
-    end
-
-    subgraph Notion["📝 Notion"]
-        NI[Integration: Task Bot]
-        ND[Database: 📋 個人タスク]
-        
-        NI --> ND
-    end
-
-    U -->|Slash Command| SA
+    U[👤 ユーザー<br/>Slack でコマンド実行]
+    
+    SA[💬 Slack App<br/>Task Bot]
+    SC1[Slash Command<br/>/task]
+    SC2[Slash Command<br/>/tasks]
+    SC3[Slash Command<br/>/done]
+    
+    API1[☁️ Vercel<br/>/api/task.js]
+    API2[☁️ Vercel<br/>/api/tasks.js]
+    API3[☁️ Vercel<br/>/api/done.js]
+    
+    L1[📚 lib/slack.js<br/>署名検証・パース]
+    L2[📚 lib/notion.js<br/>Notion API ラッパー]
+    
+    E[🔐 Environment Variables<br/>SLACK_SIGNING_SECRET<br/>NOTION_API_KEY<br/>NOTION_DATABASE_ID]
+    
+    NI[📝 Notion Integration<br/>Task Bot]
+    ND[📋 Notion Database<br/>個人タスク]
+    
+    U -->|コマンド入力| SA
+    SA --> SC1
+    SA --> SC2
+    SA --> SC3
+    
     SC1 -->|HTTPS POST| API1
     SC2 -->|HTTPS POST| API2
     SC3 -->|HTTPS POST| API3
     
+    API1 --> L1
+    API2 --> L1
+    API3 --> L1
+    
+    API1 --> L2
+    API2 --> L2
+    API3 --> L2
+    
+    L1 -.参照.-> E
+    L2 -.参照.-> E
+    
     L2 -->|Notion API| NI
+    NI -->|アクセス| ND
     
     API1 -.レスポンス.-> SA
     API2 -.レスポンス.-> SA
     API3 -.レスポンス.-> SA
     
-    SA -.メッセージ表示.-> U
-
-    style User fill:#e1f5ff
-    style Slack fill:#ffe1f5
-    style Vercel fill:#f5ffe1
-    style Notion fill:#fff5e1
+    SA -.表示.-> U
+    
+    style U fill:#e1f5ff
+    style SA fill:#ffe1f5
+    style API1 fill:#f5ffe1
+    style API2 fill:#f5ffe1
+    style API3 fill:#f5ffe1
+    style ND fill:#fff5e1
 ```
 
 ---
