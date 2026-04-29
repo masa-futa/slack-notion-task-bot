@@ -85,26 +85,54 @@ async function fetchChannelName(channelId) {
  */
 function parseMessage(message) {
   // attachment の text を優先（Feed Bot のリッチ投稿）
+  // attachment がない場合は message.text にフォールバック
   const src = message.attachments?.[0]?.text || message.text || "";
 
-  // <URL|タイトル> を抽出
-  const linkMatch = src.match(/<(https?:\/\/[^|>\s]+)\|([^>]+)>/);
-  const url   = linkMatch?.[1] || "";
-  const title = linkMatch?.[2]
-    ? linkMatch[2].replace(/\*/g, "").replace(/[🎉✨⚡️🔧]/gu, "").trim()
-    : "";
-
-  // 要約: リンク行の次の行（イタリック行・空行の手前まで）
+  let url     = "";
+  let title   = "";
   let summary = "";
-  if (linkMatch) {
-    const afterLink = src.slice(src.indexOf(linkMatch[0]) + linkMatch[0].length);
+
+  // パターン1: <URL|タイトル> 形式（attachment のリッチ投稿）
+  const richLinkMatch = src.match(/<(https?:\/\/[^|>\s]+)\|([^>]+)>/);
+
+  if (richLinkMatch) {
+    url   = richLinkMatch[1];
+    title = richLinkMatch[2]
+      .replace(/\*/g, "")
+      .replace(/[🎉✨⚡️🔧]/gu, "")
+      .trim();
+
+    // 要約: リンク行の次の行
+    const afterLink = src.slice(src.indexOf(richLinkMatch[0]) + richLinkMatch[0].length);
     const lines = afterLink.split("\n").map((l) => l.trim()).filter(Boolean);
     if (lines.length > 0) {
       const candidate = lines[0];
-      // _フッター行_ やリンクを含む行は除外
       if (!candidate.startsWith("_") && !candidate.includes("<http")) {
         summary = candidate.replace(/…$/, "").trim();
       }
+    }
+  } else {
+    // パターン2: attachments なし、text に URL が直接書かれている形式
+    // 例:
+    //   :dart: v3.13.0-78.0.dev
+    //   https://github.com/dart-lang/sdk/releases/tag/3.13.0-78.0.dev
+    const lines = src.split("\n").map((l) => l.trim()).filter(Boolean);
+
+    // URL 行を探す
+    const urlLine = lines.find((l) => /^https?:\/\//.test(l));
+    url = urlLine || "";
+
+    // URL より前の行をタイトルとして使う
+    const urlIdx = lines.indexOf(urlLine);
+    if (urlIdx > 0) {
+      title = lines
+        .slice(0, urlIdx)
+        .join(" ")
+        .replace(/:[a-z0-9_+-]+:/g, "")
+        .replace(/[🎉✨⚡️🔧🚀🎯💡📝💎🔷🌐🤖🍎]/gu, "")
+        .trim();
+    } else if (urlIdx === 0) {
+      title = url;
     }
   }
 
